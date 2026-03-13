@@ -34,9 +34,11 @@ La masse $m_{i}$ restera constante tout le long de la simulation, et seules la p
 
   - Pour chaque étoile $i$
       - Calculer l'accélération $\vec{a}_{i}^{(1)}$ subie par l'étoile (par le trou noir et les autres étoiles)
-      - Mettre à jour la position de l'étoile : $\vec{p}_{i}\leftarrow \vec{p}_{i} + \delta t.\vec{v_{i}} + \frac{1}{2}\delta t^{2} \vec{a}_{i}^{(1)}$
+      - Mettre à jour la position de l'étoile : 
+      $\vec{p}_{i}\leftarrow \vec{p}_{i} + \delta t.\vec{v_{i}} + \frac{1}{2}\delta t^{2} \vec{a}_{i}^{(1)}$
       - Calculer la nouvelle accélération $\vec{a}^{(2)}_{i}$ subie par l'étoile à sa nouvelle position
-      - Mettre à jour sa vitesse : $\vec{v}_{i} \leftarrow \vec{v}_{i} + \frac{1}{2}\delta t.\left(\vec{a}_{i}^{(1)}+\vec{a}_{i}^{(2)}\right)$
+      - Mettre à jour sa vitesse : 
+      $\vec{v}_{i} \leftarrow \vec{v}_{i} + \frac{1}{2}\delta t.\left(\vec{a}_{i}^{(1)}+\vec{a}_{i}^{(2)}\right)$
 
 Quant au calcul de l'accélération subie par l'étoile, on utilise les lois de la gravitation universelle de Newton :
 
