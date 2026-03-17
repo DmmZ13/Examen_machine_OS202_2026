@@ -97,7 +97,8 @@ class Visualizer3D:
         # Initialisation de SDL et OpenGL
         self._init_sdl()
         self._init_opengl()
-        self._init_vbo()
+        # VBO désactivés pour compatibilité Intel GPU
+        # self._init_vbo()
     
     def _init_sdl(self):
         """
@@ -130,6 +131,9 @@ class Visualizer3D:
         self.gl_context = sdl2.SDL_GL_CreateContext(self.window)
         if not self.gl_context:
             raise RuntimeError(f"Erreur création contexte GL: {sdl2.SDL_GetError()}")
+        
+        # Activation du contexte OpenGL pour le thread courant
+        sdl2.SDL_GL_MakeCurrent(self.window, self.gl_context)
         
         # Activation de la synchronisation verticale (VSync)
         sdl2.SDL_GL_SetSwapInterval(1)
@@ -182,7 +186,7 @@ class Visualizer3D:
         Met à jour les données dans les VBO (vertices et couleurs).
         """
         # Calcul des couleurs avec luminosité (vectorisé)
-        colors_with_luminosity = (self.colors * self.luminosities[:, np.newaxis] / 255.0).astype(np.float32)
+        colors_with_luminosity = (self.colors * self.luminosities[:, np.newaxis]).astype(np.float32)
         
         # Upload des vertices dans le VBO
         glBindBuffer(GL_ARRAY_BUFFER, self.vbo_vertices)
@@ -226,29 +230,20 @@ class Visualizer3D:
         # Configuration de la caméra
         self._setup_camera()
         
-        # Mise à jour des VBO si nécessaire
-        if self.vbo_needs_update:
-            self._update_vbo()
-        
-        # Dessin des points avec VBO (rendu GPU optimisé)
-        # Activation des vertex arrays
-        glEnableClientState(GL_VERTEX_ARRAY)
-        glEnableClientState(GL_COLOR_ARRAY)
-        
-        # Binding des VBO
-        glBindBuffer(GL_ARRAY_BUFFER, self.vbo_vertices)
-        glVertexPointer(3, GL_FLOAT, 0, None)
-        
-        glBindBuffer(GL_ARRAY_BUFFER, self.vbo_colors)
-        glColorPointer(3, GL_FLOAT, 0, None)
-        
-        # Rendu en une seule opération GPU
-        glDrawArrays(GL_POINTS, 0, len(self.points))
-        
-        # Désactivation des états
-        glDisableClientState(GL_COLOR_ARRAY)
-        glDisableClientState(GL_VERTEX_ARRAY)
-        glBindBuffer(GL_ARRAY_BUFFER, 0)
+        # Dessin des points en mode immédiat (compatible Intel GPU)
+        # Calcul des couleurs avec luminosité
+        colors_with_luminosity = (self.colors * self.luminosities[:, np.newaxis] / 255.0).astype(np.float32)
+
+        # Rendu point par point
+        glBegin(GL_POINTS)
+        for i in range(len(self.points)):
+            glColor3f(colors_with_luminosity[i, 0], 
+                     colors_with_luminosity[i, 1], 
+                     colors_with_luminosity[i, 2])
+            glVertex3f(self.points[i, 0], 
+                      self.points[i, 1], 
+                      self.points[i, 2])
+        glEnd()
         
         # Échange des buffers (double buffering)
         sdl2.SDL_GL_SwapWindow(self.window)
@@ -414,7 +409,7 @@ def demo():
     points[:, 2] = r * np.cos(phi)
     
     # Génération de couleurs aléatoires
-    colors = np.random.uniform(2, 255, (n_points, 3)).astype(np.float32)
+    colors = np.random.uniform(0.2, 1.0, (n_points, 3)).astype(np.float32)
     
     # Génération de luminosités aléatoires
     luminosities = np.random.uniform(0.3, 1.0, n_points).astype(np.float32)
